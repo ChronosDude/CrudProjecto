@@ -1,0 +1,212 @@
+﻿@page "/nuevoreporte"
+@using System.Net.Http;
+@using System.Net.Http.Json;
+@using CRUDProject5.Data;
+@inject HttpClient Http;
+@inject NavigationManager Navegacion;
+@inject IJSRuntime _jsRuntime
+@using Microsoft.Extensions.Logging
+@inject ILogger<NuevoReporte> Logger
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+@using System
+@using System.IO
+@using Microsoft.AspNetCore.Hosting
+@inject IWebHostEnvironment Environment
+@using System.Text.Json
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Builder;
+@using Microsoft.Extensions.DependencyInjection;
+@using CRUDProject5;
+
+
+
+<main class="flex-shrink-0">
+
+
+
+
+
+
+
+
+    <!-- Page content-->
+    <section class="py-5">
+        <div class="container px-5">
+            <!-- Contact form-->
+            <div class="bg-light rounded-3 py-5 px-4 px-md-5 mb-5">
+                <div class="text-center mb-5">
+                    <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3"><i class="bi bi-newspaper"></i></div>
+                    <h1 class="fw-bolder">Nuevo Reporte</h1>
+                    <p class="lead fw-normal text-muted mb-0">Ingresa los datos solicitados</p>
+                </div>
+                <div class="row gx-5 justify-content-center">
+                    <div class="col-lg-8 col-xl-6">
+                        <!-- * * * * * * * * * * * * * * *-->
+                        <!-- * * SB Forms Contact Form * *-->
+                        <!-- * * * * * * * * * * * * * * *-->
+                        <!-- This form is pre-integrated with SB Forms.-->
+                        <!-- To make this form functional, sign up at-->
+                        <!-- https://startbootstrap.com/solution/contact-forms-->
+                        <!-- to get an API token!-->
+                        <EditForm Model="ObRep" OnValidSubmit="@HandleValidSubmit">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <!-- Name input-->
+                            <div class="form-floating mb-3">
+                                <label> Asunto </label>
+                                <InputText  id="asunto" class="form-control" @bind-Value="@ObRep.Asunto"></InputText>
+                            </div>
+
+
+                            <div class="form-floating mb-3">
+                                <label> Describe tu reporte </label>
+                                <InputTextArea id="descripcion" class="form-control" @bind-Value="@ObRep.Descripcion"></InputTextArea>
+                                
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <label> Sube una foto </label>
+                                <InputFile OnChange="OnInputFileChange" multiple id="foto" class="form-control"></InputFile>
+                            </div>
+
+                            @if (imageDateUrls.Count > 0)
+                            {
+                                <div class="card" style="width:30rem;">
+                                    <div class="card-body">
+                                        @foreach (var imageDataUrl in imageDateUrls)
+                                        {
+                                            <img class="rounded mx-1" src="@imageDataUrl" />
+                                        }
+                                    </div>
+
+                                </div>
+                            }
+
+
+
+                        <div class="form-floating mb-3">
+                            <label> Escribe la ubicacion </label>
+                            <InputText id="ubicacion" class="form-control" @bind-Value="@ObRep.Ubicacion"></InputText>
+                           
+                        </div>
+
+
+                            <div hidden class="form-floating mb-3">
+                                <InputNumber id="latitud" class="form-control" @bind-Value="@ObRep.Latitud"></InputNumber>
+                            </div>
+                            <div hidden class="form-floating mb-3">
+                                <InputNumber id="longitud" class="form-control" @bind-Value="@ObRep.Longitud"></InputNumber>
+                            </div>
+                            <!-- Mapa interactivo-->
+                            <div class="form-floating mb-3">
+                                <label> Coloca el marcador </label>
+                                <div id="map" style="height:500px;width:100%;"></div>
+
+                            </div>
+
+
+                            <div class=text-center><button type="submit" class="btn btn-primary btn-lg text-center " @onclick="Guardar">Enviar Reporte</button></div>
+
+                        </EditForm>
+
+
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</main>
+<!-- Footer-->
+<footer class="bg-dark py-4 mt-auto">
+    <div class="container px-5">
+        <div class="row align-items-center justify-content-between flex-column flex-sm-row">
+            <div class="col-auto"><div class="small m-0 text-white">Copyright &copy; Universidad Tecnológica Metropolitana 2022</div></div>
+            <div class="col-auto">
+                <a class="link-light small" href="#!">Privacy</a>
+                <span class="text-white mx-1">&middot;</span>
+                <a class="link-light small" href="#!">Terms</a>
+                <span class="text-white mx-1">&middot;</span>
+                <a class="link-light small" href="#!">Contact</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+@code {
+
+    Report ObRep = new Report();
+    Respuesta<object> oRes = new Respuesta<object>();
+    Respuesta<Report> oResProduct = new Respuesta<Report>();
+    public string Url = "api/report";
+
+
+    private void HandleValidSubmit()
+    {
+        Logger.LogInformation("HandleValidSubmit called");
+
+        // Process the valid form
+    }
+
+
+
+    private async Task Guardar()
+
+
+    {
+        string userloged = await localStorage.GetItemAsync<string>("IdUserLoged");
+        if(userloged!=null)
+        {
+            ObRep.IdUser = Int32.Parse(userloged);
+            var response = await Http.PostAsJsonAsync<Report>(Url, ObRep);
+            oRes = response.Content.ReadFromJsonAsync<Respuesta<object>>().Result;
+            Navegacion.NavigateTo("/reportes");
+
+        }
+        else
+        {
+            Navegacion.NavigateTo("/Login");
+        }
+
+
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _jsRuntime.InvokeVoidAsync("initMap", null);
+
+        }
+    }
+
+    private IList<string> imageDateUrls = new List<string>();
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+
+
+        var maxAllowedFiles = 1;
+        var format = "image/png";
+        foreach (var imageFile in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            var resizedFile = await imageFile.RequestImageFileAsync(format, 500, 500);
+            var buffer = new byte[resizedFile.Size];
+
+            ObRep.Foto = buffer;
+
+            await resizedFile.OpenReadStream().ReadAsync(buffer);
+
+            var imageDataUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+
+            imageDateUrls.Add(imageDataUrl);
+        }
+    }
+
+
+
+
+}

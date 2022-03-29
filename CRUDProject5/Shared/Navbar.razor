@@ -1,0 +1,179 @@
+﻿@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager Navegacion;
+@using CRUDProject5.Data;
+<!--  Navigation
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container px-5">
+        <a class="navbar-brand" href="index.html">Proyecto Reportes</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="oi oi-home" aria-hidden="true"></span> Home
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="nuevoreporte">
+                        <span class="oi oi-plus" aria-hidden="true"></span> Nuevo Reporte
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="reportes">
+                        <span class="oi oi-list" aria-hidden="true"></span> Reportes
+                    </NavLink>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="navbarDropdownBlog" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Usuario</a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownBlog">
+
+
+                        <li><a class="dropdown-item" href="blog-home.html">Mi perfil</a></li>
+                        <li><a class="dropdown-item" href="blog-post.html">Cerrar sesion</a></li>
+
+
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Navbar</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarColor01">
+            <ul class="navbar-nav me-auto">
+
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="oi oi-home" aria-hidden="true"></span> Home
+                    </NavLink>
+                </li>
+                @if (roleloged == "Master")
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="usuarios">
+                            <span class="oi oi-plus" aria-hidden="true"></span> Usuarios
+                        </NavLink>
+                    </li>
+                }
+                @if (roleloged == "Client")
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="nuevoreporte">
+                            <span class="oi oi-plus" aria-hidden="true"></span> Nuevo Reporte
+                        </NavLink>
+                    </li>
+                }
+
+                @if (userloged != null)
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="reportes">
+                            <span class="oi oi-list" aria-hidden="true"></span> Reportes
+                        </NavLink>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Mi Perfil</a>
+                        <div class="dropdown-menu">
+                            <a @onclick="EditProfile" class="dropdown-item">Editar Perfil</a>
+                            <a @onclick="Logout" class="dropdown-item">Cerrar sesion</a>
+                        </div>
+                    </li>
+                }
+                else
+                {
+                    <NavLink class="nav-link" @onclick="Login" href="login">
+                        <span class="oi oi-account-login" aria-hidden="true"></span> Iniciar Sesión
+                    </NavLink>
+                    <NavLink class="nav-link" @onclick="SignIn" href="signin">
+                        <span class="oi oi-plus" aria-hidden="true"></span> Registrarse
+                    </NavLink>
+                }
+
+                @if (nameloged != null)
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="#">
+                            <span class="oi oi-person" aria-hidden="true"></span> Bienvenido de Nuevo @nameloged
+                        </NavLink>
+                    </li>
+                }
+
+
+            </ul>
+
+        </div>
+    </div>
+</nav>
+
+@code {
+
+    public string userloged { get; set; }
+    public string roleloged { get; set; }
+    public string nameloged { get; set; }
+
+    private void SignIn()
+
+    {
+        Navegacion.NavigateTo("/signin");
+    }
+
+
+    private void Login()
+
+    {
+        Navegacion.NavigateTo("/login");
+
+
+    }
+
+    private void EditProfile()
+
+    {
+        Navegacion.NavigateTo($"/editdeleteuser/{userloged}", forceLoad: true);
+
+
+    }
+
+    private async Task Logout()
+
+    {
+        await localStorage.RemoveItemAsync("nombre");
+        await localStorage.RemoveItemAsync("Rol");
+        await localStorage.RemoveItemAsync("IdUserLoged");
+
+
+
+        Navegacion.NavigateTo("/",forceLoad:true);
+
+
+
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userloged = await localStorage.GetItemAsync<string>("IdUserLoged");
+            roleloged = await localStorage.GetItemAsync<string>("Rol");
+            nameloged = await localStorage.GetItemAsync<string>("nombre");
+            StateHasChanged();
+        }
+        else
+        {
+            StateHasChanged();
+        }
+
+    }
+
+
+
+
+
+}

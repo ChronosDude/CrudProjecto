@@ -1,0 +1,138 @@
+﻿@page "/usuarios"
+@using System.Net.Http;
+@using System.Net.Http.Json;
+@using CRUDProject5.Data;
+
+@inject HttpClient Http;
+@inject IJSRuntime _jsRuntime
+@using Microsoft.Extensions.Logging
+@inject ILogger<Usuarios> Logger
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager Navegacion;
+
+
+<main class="flex-shrink-0">
+    @if (roleloged == "Master")
+    {
+
+        <!-- Pricing section-->
+        <section class="bg-light py-5">
+            <div class="container px-5 my-5">
+                <div class="text-center mb-5">
+                    <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3"><i class="bi bi-list"></i></div>
+                    <h1 class="fw-bolder">Gestión de Usuarios</h1>
+                    <p class="lead fw-normal text-muted mb-0">Una lista los usuarios existentes</p>
+                </div>
+
+
+
+
+
+                <div class="row gx-5 justify-content-center">
+                    <table class="table">
+                        <tr>
+                            <td>Id usuario</td>
+                            <td>Username</td>
+                            <td>Correo</td>
+                            <td>Nombre</td>
+                            <td>Apellido</td>
+                            <td>Rol</td>
+                        </tr>
+
+                        @if (userRespuesta != null && userRespuesta.Data != null)
+                        {
+                            @foreach (var oElemento in (List<UserRequest>)userRespuesta.Data)
+                            {
+
+                                <tr>
+
+                                    <td>@oElemento.Id </td>
+                                    <td>@oElemento.UserName</td>
+                                    <td>@oElemento.Email</td>
+                                    <td>@oElemento.Name</td>
+                                    <td>@oElemento.LastName</td>
+                                    <td>@oElemento.Rolename</td>
+                                    <td>
+                                        <button class="btn btn-info"
+                                                onclick="window.location.href = '/editdeleteuser/@oElemento.Id';">
+                                            Editar
+                                            <i class="bi bi-person-fill"></i>
+                                        </button>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </table>
+
+                </div>
+
+            </div>
+        </section>
+    }
+    else
+    {
+        <h1 class="fw-bolder">Bloqueo</h1>
+        <p class="lead fw-normal text-danger mb-0">No estas autorizado para esta seccion</p>
+    }
+</main>
+    <!-- Footer-->
+    <footer class="bg-dark py-4 mt-auto">
+        <div class="container px-5">
+            <div class="row align-items-center justify-content-between flex-column flex-sm-row">
+                <div class="col-auto"><div class="small m-0 text-white">Copyright &copy; Universidad Tecnológica Metropolitana 2022</div></div>
+                <div class="col-auto">
+                    <a class="link-light small" href="#!">Privacy</a>
+                    <span class="text-white mx-1">&middot;</span>
+                    <a class="link-light small" href="#!">Terms</a>
+                    <span class="text-white mx-1">&middot;</span>
+                    <a class="link-light small" href="#!">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+
+
+
+
+
+    @code {
+        public string Url = "/api/user";
+
+
+        public Data.Respuesta<List<UserRequest>> userRespuesta = new Data.Respuesta<List<UserRequest>>();
+
+
+        protected override async Task OnInitializedAsync()
+        {
+
+
+            userRespuesta = await Http.GetFromJsonAsync<Respuesta<List<UserRequest>>>(Url);
+
+
+        }
+
+        public string userloged { get; set; }
+        public string roleloged { get; set; }
+        public string nameloged { get; set; }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+            {
+                userloged = await localStorage.GetItemAsync<string>("IdUserLoged");
+                roleloged = await localStorage.GetItemAsync<string>("Rol");
+                nameloged = await localStorage.GetItemAsync<string>("nombre");
+                StateHasChanged();
+            }
+            else
+            {
+                StateHasChanged();
+            }
+
+        }
+
+    }

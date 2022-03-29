@@ -1,0 +1,212 @@
+﻿@page "/reportes"
+@using System.Net.Http;
+@using System.Net.Http.Json;
+@using CRUDProject5.Data;
+@inject HttpClient Http;
+@inject IJSRuntime _jsRuntime
+@using Microsoft.Extensions.Logging
+@inject ILogger<Reportes> Logger
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager Navegacion;
+
+
+<main class="flex-shrink-0">
+    <!-- Footer
+                        <td><a href="/editdelete/@oElemento.Id">Editar</a></td>-->
+
+
+
+
+
+
+
+    <!-- Pricing section-->
+    <section class="bg-light py-5">
+        <div class="container px-5 my-5">
+            <div class="text-center mb-5">
+                <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3"><i class="bi bi-list"></i></div>
+                <h1 class="fw-bolder">Reportes realizados</h1>
+                <p class="lead fw-normal text-muted mb-0">Una lista de los ultimos reportes realizados</p>
+            </div>
+
+
+
+            <div id="getmap" style="height:500px;width:100%;"></div>
+            <!--
+            <div class="row gx-5 justify-content-center">
+                <table class="table">
+                    <tr>
+                        <td>Asunto</td>
+                        <td>Descripcion</td>
+                        <td>Foto</td>
+                        <td>Ubicacion</td>
+                        <td>Usuario</td>
+                        <td>Estatus</td>
+                        <td>Editar</td>
+                    </tr>
+                    @if (oRespuesta != null && oRespuesta.Data != null)
+                    {
+
+                        @foreach (var oElemento in (List<Report>)oRespuesta.Data)
+                        {
+                            var imageDataUrl = $"data:image/png;base64,{Convert.ToBase64String(oElemento.Foto)}";
+                            <tr>
+
+                                <td>@oElemento.Asunto</td>
+                                <td>@oElemento.Descripcion</td>
+                                <td><img width="200" height="100" class="rounded mx-1" src="@imageDataUrl" /></td>
+                                <td>@oElemento.Ubicacion</td>
+                                <td>@oElemento.User</td>
+                                <td>@oElemento.Estatus</td>
+                                <td>
+                                    <button class="btn btn-info"
+                                            onclick="window.location.href = '/editdelete/@oElemento.Id';">
+                                        Editar
+                                        <i class="bi bi-person-fill"></i>
+                                    </button>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                </table>
+
+            </div -->
+
+
+            <div class="wrapper">
+                <div class="cards_wrap">
+
+                    @if (oRespuesta != null && oRespuesta.Data != null)
+                    {
+
+                        @foreach (var oElemento in (List<Report>)oRespuesta.Data)
+                        {
+                            var imageDataUrl = $"data:image/png;base64,{Convert.ToBase64String(oElemento.Foto)}";
+
+                            <div class="card_item">
+                                <div class="card_inner">
+                                    <div class="card_top">
+                                        <img src="@imageDataUrl" alt="car" />
+                                    </div>
+                                    <div class="card_bottom">
+                                        <div class="card_category">
+                                            @oElemento.Estatus
+                                        </div>
+                                        <div class="card_info">
+                                            <p class="title">@oElemento.Asunto</p>
+                                            <p>
+                                                @oElemento.Descripcion
+                                            </p>
+                                        </div>
+                                        <div class="card_creator">
+                                            @oElemento.User
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-info"
+                                                    onclick="window.location.href = '/editdelete/@oElemento.Id';">
+                                                Editar
+                                                <i class="bi bi-person-fill"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                        }
+                    }
+
+
+
+
+
+
+
+                </div>
+            </div>
+
+
+
+        </div>
+    </section>
+</main>
+<!-- Footer-->
+<footer class="bg-dark py-4 mt-auto">
+    <div class="container px-5">
+        <div class="row align-items-center justify-content-between flex-column flex-sm-row">
+            <div class="col-auto"><div class="small m-0 text-white">Copyright &copy; Universidad Tecnológica Metropolitana 2022</div></div>
+            <div class="col-auto">
+                <a class="link-light small" href="#!">Privacy</a>
+                <span class="text-white mx-1">&middot;</span>
+                <a class="link-light small" href="#!">Terms</a>
+                <span class="text-white mx-1">&middot;</span>
+                <a class="link-light small" href="#!">Contact</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+
+
+
+@code {
+    public string Url = "/api/report";
+    public string msg { get; set; }
+
+    public string userloged { get; set; }
+    public string roleloged { get; set; }
+    public string nameloged { get; set; }
+
+    public Data.Respuesta<List<Report>> oRespuesta = new Data.Respuesta<List<Report>>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        userloged = await localStorage.GetItemAsync<string>("IdUserLoged");
+        roleloged = await localStorage.GetItemAsync<string>("Rol");
+        nameloged = await localStorage.GetItemAsync<string>("nombre");
+
+        if (roleloged == "Master" || roleloged == "Administrator")
+        {
+            oRespuesta = await Http.GetFromJsonAsync<Respuesta<List<Report>>>(Url);
+        }
+        if (roleloged == "Client")
+        {
+            oRespuesta = await Http.GetFromJsonAsync<Respuesta<List<Report>>>(Url + $"/GetAllByUser?uid={userloged}");
+        }
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+
+        if (firstRender)
+        {
+            userloged = await localStorage.GetItemAsync<string>("IdUserLoged");
+            roleloged = await localStorage.GetItemAsync<string>("Rol");
+            nameloged = await localStorage.GetItemAsync<string>("nombre");
+            if (roleloged == "Master" || roleloged == "Administrator")
+            {
+                oRespuesta = await Http.GetFromJsonAsync<Respuesta<List<Report>>>(Url);
+            }
+            if (roleloged == "Client")
+            {
+                oRespuesta = await Http.GetFromJsonAsync<Respuesta<List<Report>>>(Url + $"/GetAllByUser?uid={userloged}");
+            }
+
+            
+            await _jsRuntime.InvokeVoidAsync("getMap", oRespuesta.Data.ToList());
+
+        }
+    }
+
+
+
+}
